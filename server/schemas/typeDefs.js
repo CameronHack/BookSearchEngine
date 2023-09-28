@@ -17,6 +17,11 @@ const typeDefs = `
     savedBooks: [Book]
   }
 
+  type Auth {
+    token: ID!
+    user: User
+  }
+
   type Query {
     user(id: ID!): User
   }
