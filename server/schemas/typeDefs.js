@@ -1,6 +1,6 @@
 const typeDefs = `
   type Book {
-    _id: ID!
+    _id: ID
     authors: [String]
     description: String!
     bookId: String!
@@ -10,10 +10,10 @@ const typeDefs = `
   }
 
   type User {
-    _id: ID!
-    username: String!
-    email: String!
-    password: String!
+    _id: ID
+    username: String
+    email: String
+    password: String
     savedBooks: [Book]
   }
 
@@ -23,7 +23,7 @@ const typeDefs = `
   }
 
   type Query {
-    user(id: ID!): User
+    me: User
   }
 
   type Mutation {
@@ -32,6 +32,6 @@ const typeDefs = `
     saveBook(userId: ID!, bookId: ID!): User
     deleteBook(userId: ID!, bookId: ID!): User
   }
-`; 
+`;
 
 module.exports = typeDefs;

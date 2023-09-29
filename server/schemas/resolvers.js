@@ -1,71 +1,57 @@
 const { User } = require('../models');
-const { signToken } = require('../utils/auth');
+const { signToken, AuthenticationError } = require('../utils/auth');
 
 const resolvers = {
     Query: {
-        user: async (parent, { id }) => {
-            const foundUser = await User.findOne({
-                $or: [{ _id: user ? user._id : params.id }, { username: params.username }],
-            });
-
-            if (!foundUser) {
-                throw new Error('Cannot find a user with this id!');
+        me: async (parent, args, context) => {
+            if (context.user) {
+              return User.findOne({ _id: context.user._id });
             }
-
-            return foundUser
-        },
+            throw AuthenticationError;
+          },
     },
 
     Mutation: {
 
-        createUser: async (parent, { body }) => {
-            const user = await User.create(body);
-
-            if (!user) {
-                throw new Error('Something is wrong!');
-            }
+        createUser: async (parent, { username, email, password }) => {
+            const user = await User.create({ username, email, password });
             const token = signToken(user);
             return { token, user };
         },
 
-        login: async (parent, { body }) => {
-            const user = await User.findOne({ $or: [{ username: body.username }, { email: body.email }] });
+        login: async (parent, { email, password }) => {
+            const user = await User.findOne( { email: email } );
+
             if (!user) {
-                throw new Error("Can't find this user");
+                throw AuthenticationError;
             }
 
-            const correctPw = await user.isCorrectPassword(body.password);
+            const correctPw = await user.isCorrectPassword(password);
 
             if (!correctPw) {
-                throw new Error('Wrong password!');
+                throw AuthenticationError;
             }
             const token = signToken(user);
             return { token, user };
         },
 
-        saveBook: async (parent, { user, body }) => {
-            try {
-                const updatedUser = await User.findOneAndUpdate(
-                    { _id: user._id },
-                    { $addToSet: { savedBooks: body } },
-                    { new: true, runValidators: true }
-                );
-                return updatedUser;
-            } catch (err) {
-                console.error(err);
-                throw new Error(err.message);
-            }
+        saveBook: async (parent, { userId, bookId }) => {
+            const updatedUser = await User.findOneAndUpdate(
+                { _id: userId },
+                { $addToSet: { savedBooks: bookId } },
+                { new: true, runValidators: true }
+            )
+
+            return updatedUser;
         },
 
-        deleteBook: async (parent, { user, params }) => {
+        deleteBook: async (parent, { userId, bookId }) => {
             const updatedUser = await User.findOneAndUpdate(
-                { _id: user._id },
-                { $pull: { savedBooks: { bookId: params.bookId } } },
+                { _id: userId },
+                { $pull: { savedBooks: { bookId: bookId } } },
                 { new: true }
-            );
-            if (!updatedUser) {
-                throw new Error("Couldn't find user with this id!");
-            }
+            )
+
             return updatedUser;
         },
 
