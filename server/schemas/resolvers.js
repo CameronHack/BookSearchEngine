@@ -5,10 +5,10 @@ const resolvers = {
     Query: {
         me: async (parent, args, context) => {
             if (context.user) {
-              return User.findOne({ _id: context.user._id });
+                return User.findOne({ _id: context.user._id });
             }
             throw AuthenticationError;
-          },
+        },
     },
 
     Mutation: {
@@ -20,7 +20,7 @@ const resolvers = {
         },
 
         login: async (parent, { email, password }) => {
-            const user = await User.findOne( { email: email } );
+            const user = await User.findOne({ email: email });
 
             if (!user) {
                 throw AuthenticationError;
@@ -35,24 +35,30 @@ const resolvers = {
             return { token, user };
         },
 
-        saveBook: async (parent, { userId, bookId }) => {
-            const updatedUser = await User.findOneAndUpdate(
-                { _id: userId },
-                { $addToSet: { savedBooks: bookId } },
-                { new: true, runValidators: true }
-            )
+        saveBook: async (parent, args, context) => {
+            if (context.user) {
+                const updatedUser = await User.findOneAndUpdate(
+                    { _id: context.user._id },
+                    { $addToSet: { savedBooks: { ...args } } },
+                    { new: true, runValidators: true }
+                )
 
-            return updatedUser;
+                return updatedUser;
+            } else {
+                throw AuthenticationError
+            }
         },
 
-        deleteBook: async (parent, { userId, bookId }) => {
-            const updatedUser = await User.findOneAndUpdate(
-                { _id: userId },
-                { $pull: { savedBooks: { bookId: bookId } } },
-                { new: true }
-            )
+        deleteBook: async (parent, { bookId }, context) => {
+            if (context.user) {
+                const updatedUser = await User.findOneAndUpdate(
+                    { _id: context.user._id },
+                    { $pull: { savedBooks: { bookId } } },
+                    { new: true }
+                )
 
-            return updatedUser;
+                return updatedUser;
+            }
         },
 
     },
